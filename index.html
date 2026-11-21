@@ -1,33 +1,414 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>miodowki</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      max-width: 680px;
-      margin: 4rem auto;
-      padding: 0 1.25rem;
-      line-height: 1.6;
-      color: #1f2328;
-      background-color: #ffffff;
-    }
-    h1 {
-      margin-bottom: 0.25rem;
-    }
-    p {
-      color: #57606a;
-    }
-    a {
-      color: #0969da;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>islands value list</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #111;
+  --bg2: #1a1a1a;
+  --bg3: #222;
+  --border: #2a2a2a;
+  --text: #e8e8e8;
+  --muted: #555;
+  --dim: #444;
+  --sell: #4ade80;
+  --buy: #fb923c;
+  --hover: #1c1c1c;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+  text-transform: lowercase;
+}
+
+#topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#topbar h1 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+#topbar h1 span {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+#search {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 3px;
+  outline: none;
+  width: 200px;
+  text-transform: lowercase;
+}
+#search:focus { border-color: var(--dim); }
+#search::placeholder { color: var(--muted); }
+
+.ctrl-group { display: flex; gap: 5px; align-items: center; }
+
+select, .flt-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  outline: none;
+  text-transform: lowercase;
+}
+select:hover, .flt-btn:hover { border-color: var(--dim); color: var(--text); }
+.flt-btn.on { border-color: var(--dim); color: var(--text); }
+
+#result-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+#wrap {
+  padding: 0 20px 60px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+#legend {
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 14px;
+}
+
+thead th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .05em;
+  color: var(--muted);
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+thead th:hover { color: var(--text); }
+thead th.sorted { color: var(--text); }
+thead th:not(:first-child) { text-align: right; }
+
+tbody tr {
+  border-bottom: 1px solid #181818;
+  transition: background .06s;
+}
+tbody tr:hover { background: var(--hover); }
+
+td {
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+td:not(:first-child) { text-align: right; }
+
+.name { font-weight: 500; }
+.id-tag {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'Courier New', monospace;
+  margin-top: 1px;
+}
+
+.price {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.price.sell { color: var(--sell); }
+.price.buy  { color: var(--buy); }
+.none { color: var(--muted); font-weight: 400; }
+
+.sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.conf {
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+  vertical-align: middle;
+}
+.conf-dot {
+  width: 3px; height: 9px;
+  border-radius: 1px;
+  background: var(--border);
+}
+.conf-dot.on { background: var(--dim); }
+
+#state {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+.spin {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--dim);
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  margin-bottom: 10px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#pager {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+.pg {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.pg:hover { border-color: var(--dim); color: var(--text); }
+.pg.cur { border-color: var(--dim); color: var(--text); font-weight: 600; }
+.pg:disabled { opacity: .25; cursor: default; pointer-events: none; }
+
+@media (max-width: 600px) {
+  #topbar { padding: 10px 12px; }
+  #wrap { padding: 0 12px 48px; }
+  .sub { display: none; }
+  .col-conf { display: none; }
+}
+</style>
 </head>
 <body>
-  <h1>Hi, I'm miodowki</h1>
-  <p>Welcome to my personal site built with GitHub Pages.</p>
-  <p><a href="https://github.com/miodowki">Check out my GitHub</a></p>
+
+<div id="topbar">
+  <h1>islands value list <span>/ roblox</span></h1>
+
+  <input id="search" type="search" placeholder="search..." autocomplete="off">
+
+  <div class="ctrl-group">
+    <button class="flt-btn on" data-f="all">all</button>
+    <button class="flt-btn" data-f="sell">has sell</button>
+    <button class="flt-btn" data-f="buy">has buy</button>
+    <button class="flt-btn" data-f="both">both</button>
+  </div>
+
+  <select id="sort">
+    <option value="name|asc">name a-z</option>
+    <option value="sell|desc">sell high</option>
+    <option value="sell|asc">sell low</option>
+    <option value="buy|desc">buy high</option>
+    <option value="buy|asc">buy low</option>
+    <option value="samples|desc">most data</option>
+  </select>
+
+  <select id="pp">
+    <option value="50">50 / page</option>
+    <option value="100" selected>100 / page</option>
+    <option value="250">250 / page</option>
+    <option value="0">all</option>
+  </select>
+
+  <div id="result-count"></div>
+</div>
+
+<div id="wrap">
+  <div id="legend">
+    <span style="color:var(--sell)">sell</span> = what you get when selling to a shop &nbsp;/&nbsp;
+    <span style="color:var(--buy)">buy</span> = what you pay buying from a shop &nbsp;/&nbsp;
+    per unit, coins, median of scraped vending machines
+  </div>
+
+  <div id="state"><div class="spin"></div><br>loading...</div>
+
+  <table id="tbl" style="display:none">
+    <thead>
+      <tr>
+        <th data-col="name" class="sorted">item</th>
+        <th data-col="sell" style="color:var(--sell)">sell</th>
+        <th data-col="buy"  style="color:var(--buy)">buy</th>
+        <th data-col="samples" class="col-conf">data</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <div id="pager"></div>
+</div>
+
+<script>
+const DATA_URL = 'https://raw.githubusercontent.com/miodowki/miodowki.github.io/refs/heads/main/value_list.json';
+
+let items = [], filtered = [];
+let sortCol = 'name', sortDir = 'asc', filter = 'all', query = '', page = 1, pp = 100;
+
+function fmt(n) {
+  if (n == null) return null;
+  if (n >= 1e9) return (n/1e9).toFixed(2).replace(/\.?0+$/,'') + 'b';
+  if (n >= 1e6) return (n/1e6).toFixed(2).replace(/\.?0+$/,'') + 'm';
+  if (n >= 1e3) return (n/1e3).toFixed(1).replace(/\.0$/,'') + 'k';
+  return n.toLocaleString();
+}
+
+function fmtRange(d) {
+  if (!d) return '';
+  return `${fmt(d.min)} to ${fmt(d.max)} (${d.samples})`;
+}
+
+function confBar(n) {
+  const filled = Math.min(5, Math.ceil(Math.log2((n||0) + 1)));
+  return `<span class="conf">${[...Array(5)].map((_,i) =>
+    `<span class="conf-dot${i < filled ? ' on' : ''}"></span>`).join('')}</span>`;
+}
+
+function render() {
+  filtered = items.filter(it => {
+    if (query && !it.displayName.toLowerCase().includes(query) && !it.id.toLowerCase().includes(query)) return false;
+    if (filter === 'sell' && !it.sell) return false;
+    if (filter === 'buy'  && !it.buy)  return false;
+    if (filter === 'both' && (!it.sell || !it.buy)) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    let va, vb;
+    if (sortCol === 'name')      { va = a.displayName.toLowerCase(); vb = b.displayName.toLowerCase(); }
+    else if (sortCol === 'sell') { va = a.sell?.median ?? (sortDir==='asc'?Infinity:-Infinity); vb = b.sell?.median ?? (sortDir==='asc'?Infinity:-Infinity); }
+    else if (sortCol === 'buy')  { va = a.buy?.median  ?? (sortDir==='asc'?Infinity:-Infinity); vb = b.buy?.median  ?? (sortDir==='asc'?Infinity:-Infinity); }
+    else                         { va = (a.sell?.samples||0)+(a.buy?.samples||0); vb = (b.sell?.samples||0)+(b.buy?.samples||0); }
+    return va < vb ? (sortDir==='asc'?-1:1) : va > vb ? (sortDir==='asc'?1:-1) : 0;
+  });
+
+  const total = filtered.length;
+  const pages = pp ? Math.max(1, Math.ceil(total/pp)) : 1;
+  page = Math.min(page, pages);
+  const start = pp ? (page-1)*pp : 0;
+  const slice = pp ? filtered.slice(start, start+pp) : filtered;
+
+  document.getElementById('result-count').textContent =
+    `${total.toLocaleString()} items` + (pp && pages > 1 ? ` / page ${page} of ${pages}` : '');
+
+  const tbody = document.getElementById('tbody');
+  if (!slice.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--muted)">no results</td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map(it => {
+      const s = it.sell, b = it.buy;
+      const n = (s?.samples||0) + (b?.samples||0);
+      return `<tr>
+        <td><div class="name">${it.displayName.toLowerCase()}</div><div class="id-tag">${it.id}</div></td>
+        <td>${s ? `<div class="price sell">${fmt(s.median)}</div><div class="sub">${fmtRange(s)}</div>` : `<div class="none">-</div>`}</td>
+        <td>${b ? `<div class="price buy">${fmt(b.median)}</div><div class="sub">${fmtRange(b)}</div>`  : `<div class="none">-</div>`}</td>
+        <td class="col-conf">${confBar(n)} <span style="font-size:11px;color:var(--muted)">${n}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  const pager = document.getElementById('pager');
+  if (!pp || pages <= 1) { pager.innerHTML = ''; return; }
+
+  let html = `<button class="pg" onclick="goPage(${page-1})" ${page<=1?'disabled':''}>prev</button>`;
+  const show = new Set([1, pages, page, page-1, page+1].filter(p => p >= 1 && p <= pages));
+  let prev = 0;
+  [...show].sort((a,b) => a-b).forEach(p => {
+    if (prev && p - prev > 1) html += `<span style="color:var(--muted);padding:4px 2px;font-size:12px">...</span>`;
+    html += `<button class="pg${p===page?' cur':''}" onclick="goPage(${p})">${p}</button>`;
+    prev = p;
+  });
+  html += `<button class="pg" onclick="goPage(${page+1})" ${page>=pages?'disabled':''}>next</button>`;
+  pager.innerHTML = html;
+}
+
+function goPage(p) {
+  page = p;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('search').addEventListener('input', e => {
+  query = e.target.value.toLowerCase().trim(); page = 1; render();
+});
+document.getElementById('sort').addEventListener('change', e => {
+  [sortCol, sortDir] = e.target.value.split('|'); page = 1; render();
+});
+document.getElementById('pp').addEventListener('change', e => {
+  pp = parseInt(e.target.value); page = 1; render();
+});
+document.querySelectorAll('.flt-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.flt-btn').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    filter = btn.dataset.f; page = 1; render();
+  });
+});
+document.querySelectorAll('thead th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    else { sortCol = col; sortDir = col === 'name' ? 'asc' : 'desc'; }
+    document.querySelectorAll('thead th').forEach(h => h.classList.remove('sorted'));
+    th.classList.add('sorted');
+    const val = `${sortCol}|${sortDir}`;
+    const opt = document.querySelector(`#sort option[value="${val}"]`);
+    if (opt) document.getElementById('sort').value = val;
+    page = 1; render();
+  });
+});
+
+fetch(DATA_URL)
+  .then(r => r.json())
+  .then(d => {
+    items = Object.values(d.items);
+    document.getElementById('state').style.display = 'none';
+    document.getElementById('tbl').style.display = 'table';
+    render();
+  })
+  .catch(e => {
+    document.getElementById('state').textContent = 'failed to load: ' + e.message;
+  });
+</script>
 </body>
 </html>
